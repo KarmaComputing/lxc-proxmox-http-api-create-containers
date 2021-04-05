@@ -1,0 +1,106 @@
+# Assumes a dedicated server with an assigned ipv6 subnet e.g. from hetzner
+
+# Set hostname
+echo "proxmox1" > /etc/hostname
+# Edit /etc/hosts to set hostname to proxmox1
+
+# Reload network configuration
+invoke-rc.d hostname.sh start
+invoke-rc.d networking force-reload
+
+# Reboot the system
+reboot
+
+# Add proxmox apt source & key
+
+echo "deb http://download.proxmox.com/debian/pve buster pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
+
+wget http://download.proxmox.com/debian/proxmox-ve-release-6.x.gpg -O /etc/apt/trusted.gpg.d/proxmox-ve-release-6.x.gpg
+chmod +r /etc/apt/trusted.gpg.d/proxmox-ve-release-6.x.gpg
+
+# Run update & full upgrade
+apt update && apt full-upgrade -y
+
+# Install proxmox-ve open-iscsi
+apt install proxmox-ve postfix open-iscsi -y
+# Note , the install of proxmox-ve can take over 30minutes 
+
+# Choose no for WINS/DHCP, and 'local only' for postfix
+
+# Update grub
+update-grub
+
+# Update /etc/sysctl.conf
+
+net.ipv4.ip_forward=1
+net.ipv6.conf.all.forwarding=1
+
+
+# Reboot
+reboot
+
+# After reboot you will be able to access https://176.9.145.50:8006
+
+# If you can no-longer login via ssh, reset your terminal
+reset
+# and login again.
+
+# Configure IPv6 bridge
+
+
+THE GATEWAY MUST BE THE IP ADDRESS GIVEN TO THE VIRTUAL BRIDGE. 
+FORWARDING HAPPENS THANKS TO net.ipv6.conf.all.forwarding=1
+
+# Download a debian template
+pveem available --section system # see whats available
+pveam download local debian-10-standard_10.7-1_amd64.tar.gz
+pveam download local alpine-3.12-default_20200823_amd64.tar.xz
+
+
+# DHCP
+# install service isc-dhcp-server
+apt install -y isc-dhcp-server
+# Enable dhcp server on boot
+systemctl enable isc-dhcp-server
+
+# Edit /etc/dhcp/dhcpd6.conf
+
+# Edit /etc/default/isc-dhcp-server
+# Uncomment out / add the following:
+
+DHCPDv6_CONF=/etc/dhcp/dhcpd6.conf
+DHCPDv6_PID=/var/run/dhcpd6.pid
+INTERFACESv6="vmbr0"
+
+# Restart dhcp server
+systemctl stop isc-dhcp-server
+systemctl start isc-dhcp-server
+
+# Verify dhcp server is running
+systemctl status isc-dhcp-server
+
+# Install Router advertisement daemon radvd
+apt-get install -y radvd
+# Enable to start radvd after reboot
+systemctl enable radvd 
+# Create /etc/radvd.conf
+
+interface vmbr0 {
+        AdvSendAdvert on;
+        MinRtrAdvInterval 3;
+        MaxRtrAdvInterval 10;
+        prefix <IPv6 subnet>/<subnet mask> {
+                AdvOnLink on;
+                AdvAutonomous on;
+                AdvRouterAddr on;
+        };
+};
+
+# Restart radvd
+
+systemctl restart radvd
+systemctl status radvd
+
+
+# Create container using dhcp
+pct create 999 --start --hostname 999 --net0 name=eth0,bridge=vmbr0,ip6=dhcp,gw6=2a01:4f8:160:2333:0:1:0:2 --memory 10240 local:vztmpl/debian-10-standard_10.7-1_amd64.tar.gz
