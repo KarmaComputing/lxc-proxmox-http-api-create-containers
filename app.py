@@ -26,6 +26,7 @@ def create_app():
                     <li>You can ssh into the container</li>
                    </ul>
                    <h2>Usage:</h2>
+                   <p><b>Note:</b>The `ssh_public_keys` is just a copy/paste `cat` of your id_rsa.pub</p>
                    <pre>curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {{}}}}'</pre>\n
                    <p>Then ssh into your container: ssh root@&lt;public_ip&gt; using the public key you provided.</p>
                    <br /><a href="/openapi">View Openapi</a>"""
