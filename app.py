@@ -13,7 +13,7 @@ def create_app():
 
     @app.route("/")
     def index():
-        return f"""Usage: curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key", "network": {{}}}}'"""
+        return f"""Usage: curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {{}}}}'"""
 
     @app.route("/container", methods=["POST"])
     def create_container():
