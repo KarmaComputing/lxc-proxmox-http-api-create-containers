@@ -4,10 +4,8 @@ info:
   description: Quicky spin up a system container (lxc container / docker) via proxmox. You get a public ipv6 address for each container and can ssh into it. e.g. ssh roo@fe80::7855:30ff:fe18:7b68
   version: 0.0.1
 servers:
-  - url: http://176.9.145.50:4000/container
+  - url: http://176.9.145.50:4000
     description: ''
-  - url: http://staging-api.example.com
-    description: Proof of concept
 paths:
   /container:
     post:
