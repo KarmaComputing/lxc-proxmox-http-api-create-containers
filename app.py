@@ -51,15 +51,18 @@ def create_app():
                     print(f"Got ip address: {public_ip}")
                     attempts = max_attempts
 
-            return {
-                "msg": f"""Container created! Probably.\n
+            return (
+                {
+                    "msg": f"""Container created! Probably.\n
                   ssh into it with: `ssh root@{public_ip}` using your public key\n
                   The container id is {container.id}\n
                   You might need to wait a minute or two before the public address is
                   reachable. Not 100% sure why.\n
                   You can expediate it by traceroute6{public_ip} will add your route to
                   routing tables along the way."""
-            }
+                },
+                201,
+            )
 
         except ValidationError as e:
             return e.json()

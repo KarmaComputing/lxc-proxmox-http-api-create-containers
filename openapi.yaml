@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: Container creation via curl
+  description: Quicky spin up a system container (lxc container / docker) via proxmox. You get a public ipv6 address for each container and can ssh into it. e.g. ssh roo@fe80::7855:30ff:fe18:7b68
+  version: 0.0.1
+servers:
+  - url: http://176.9.145.50:4000/container
+    description: ''
+  - url: http://staging-api.example.com
+    description: Proof of concept
+paths:
+  /container:
+    post:
+      summary: Creates a container.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 123
+                hostname:
+                  type: string
+                  example: "123"
+                memory:
+                  type: integer
+                  example: 512
+                network:
+                  type: string
+                  example: {}
+                ssh_public_keys:
+                  type: string
+                  example: ssh-rsa BBBBAAB...
+      responses: 
+        '201':
+          description: Created
