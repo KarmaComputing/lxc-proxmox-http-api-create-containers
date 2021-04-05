@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from pydantic.error_wrappers import ValidationError
 from typing import Optional
 
+from time import sleep
 import subprocess
 import tempfile
 from flask import Flask, request
@@ -30,14 +31,33 @@ def create_app():
             container = Container(**request.get_json(force=True))
             container.status = "creating"
             new_container(container)
-            # Get ip of container
-            public_ip = subprocess.getoutput(
-                f"pct exec {container.id} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
-            )
 
-            return f"""Container created, probably.\n
+            # Get ip of container
+            def get_ip():
+                public_ip = subprocess.getoutput(
+                    f"pct exec {container.id} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
+                )
+                return public_ip
+
+            attempts = 0
+            max_attempts = 10
+            while attempts < max_attempts:
+                if len(get_ip()) < 5:
+                    sleep(3)
+                    print("Waiting for ip address...")
+                    max_attempts += 1
+                else:
+                    public_ip = get_ip()
+                    print(f"Got ip address: {public_ip}")
+                    attempts = max_attempts
+
+            return f"""Container created! Probably.\n
                   ssh into it with: `ssh root@{public_ip}` using your public key\n
-                  The container id is {container.id}"""
+                  The container id is {container.id}\n
+                  You might need to wait a minute or two before the public address is
+                  reachable. Not 100% sure why.\n
+                  You can expediate it by traceroute6{public_ip} will add your route to
+                  routing tables along the way."""
 
         except ValidationError as e:
             return e.json()
