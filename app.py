@@ -12,7 +12,7 @@ def create_app():
 
     @app.route("/")
     def index():
-        return f"""Usage: curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "network": {{}}}}'"""
+        return f"""Usage: curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key", "network": {{}}}}'"""
 
     @app.route("/container", methods=["POST"])
     def create_container():
@@ -30,7 +30,14 @@ def create_app():
             container = Container(**request.get_json(force=True))
             container.status = "creating"
             new_container(container)
-            return f"Container created, probably. With container id: {container.id}"
+            # Get ip of container
+            public_ip = subprocess.getoutput(
+                f"pct exec {container.id} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
+            )
+
+            return f"""Container created, probably.\n
+                  ssh into it with: `ssh root@{public_ip}` using your public key\n
+                  The container id is {container.id}"""
 
         except ValidationError as e:
             return e.json()
@@ -65,6 +72,7 @@ def new_container(container: Container):
     # Container ssh keys (optional, but needed if you want to login)
     fp = tempfile.NamedTemporaryFile(mode="wt")
     fp.write(container.ssh_public_keys)
+    fp.seek(0)
 
     command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6},gw6={container.network.gw6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
     subprocess.run(command, shell=True)
