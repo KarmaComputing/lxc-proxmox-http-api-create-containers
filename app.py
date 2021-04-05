@@ -3,6 +3,7 @@ from pydantic.error_wrappers import ValidationError
 from typing import Optional
 
 import subprocess
+import tempfile
 from random import randrange
 from flask import Flask, request
 
@@ -12,10 +13,15 @@ def create_app():
 
     @app.route("/container", methods=["POST"])
     def create_container():
-        """Usage
+        """
+        Create a container with the default template and auto public ipv6 address asignment
+        See class Container and class Network for defaults.
+        Usage:
         curl http://127.0.0.1:5000/container -d '{"id":"123", "hostname":123, "memory": 1024, "network": {}}'
-        Will create a container with the default template and auto public ipv6 address asignment
-        See class Container and class Network for defaults
+
+        Or, with public ssh key injected for root user login
+        curl http://127.0.0.1:5000/container -d '{"id":"123", "hostname":123, "memory": 1024, "network": {}, "ssh_public_keys": "<your id.rsa.pub>"}'
+
         """
         try:
             container = Container(**request.get_json(force=True))
@@ -55,13 +61,18 @@ class Container(BaseModel):
     memory: int
     network: Network = None
     template: Optional[str] = "local:vztmpl/debian-10-standard_10.7-1_amd64.tar.gz"
-    ssh_public_keys: Optional[str] = None
+    ssh_public_keys: Optional[str] = ""
     status: Optional[str] = ""
 
 
 def new_container(container: Container):
-    command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6},gw6={container.network.gw6} --memory {container.memory} {container.template}"
+    # Container ssh keys (optional, but needed if you want to login)
+    fp = tempfile.NamedTemporaryFile(mode="wt")
+    fp.write(container.ssh_public_keys)
+
+    command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6},gw6={container.network.gw6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
     subprocess.run(command, shell=True)
+    fp.close()
 
 
 """
