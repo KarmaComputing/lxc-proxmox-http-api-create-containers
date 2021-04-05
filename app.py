@@ -4,12 +4,15 @@ from typing import Optional
 
 import subprocess
 import tempfile
-from random import randrange
 from flask import Flask, request
 
 
 def create_app():
     app = Flask(__name__)
+
+    @app.route("/")
+    def index():
+        return f"""Usage: curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "network": {{}}}}'"""
 
     @app.route("/container", methods=["POST"])
     def create_container():
@@ -37,14 +40,7 @@ def create_app():
     def health():
         return "OK"
 
-    @app.route("/")
-    def create_random_container():
-        id = randrange(1000, 9000)
-        new_container(
-            Container({"id": id, "hostname": id, "memory": 512, "status": "creating"})
-        )
-        return f"Container created, probably. With container id: {id}"
-
+    # Return fask wsgi app
     return app
 
 
