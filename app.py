@@ -42,7 +42,7 @@ def create_app():
             attempts = 0
             max_attempts = 10
             while attempts < max_attempts:
-                if len(get_ip()) < 5:
+                if len(get_ip()) < 5 and "fe80" not in get_ip():
                     sleep(3)
                     print("Waiting for ip address...")
                     max_attempts += 1
