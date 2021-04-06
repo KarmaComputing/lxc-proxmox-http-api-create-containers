@@ -108,8 +108,6 @@ class Network(BaseModel):
     name: Optional[str] = "eth0"
     bridge: Optional[str] = "vmbr0"
     ipv6: Optional[str] = "dhcp"
-    gw6: Optional[str] = "2a01:4f8:160:2333:0:1:0:2"
-
 
 class Container(BaseModel):
     id: int
@@ -120,14 +118,13 @@ class Container(BaseModel):
     ssh_public_keys: Optional[str] = ""
     status: Optional[str] = ""
 
-
 def new_container(container: Container):
     # Container ssh keys (optional, but needed if you want to login)
     fp = tempfile.NamedTemporaryFile(mode="wt")
     fp.write(container.ssh_public_keys)
     fp.seek(0)
 
-    command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6},gw6={container.network.gw6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
+    command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
     subprocess.run(command, shell=True)
     fp.close()
 
