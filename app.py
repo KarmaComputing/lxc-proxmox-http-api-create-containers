@@ -67,6 +67,8 @@ def create_app():
                     print(f"Got ip address: {public_ip}")
                     attempts = max_attempts
 
+                public_ip = get_ip()  # Always get latest public ip
+
             return (
                 {
                     "msg": f"""Container created! Probably.\n
@@ -109,6 +111,7 @@ class Network(BaseModel):
     bridge: Optional[str] = "vmbr0"
     ipv6: Optional[str] = "dhcp"
 
+
 class Container(BaseModel):
     id: int
     hostname: str
@@ -117,6 +120,7 @@ class Container(BaseModel):
     template: Optional[str] = "local:vztmpl/debian-10-standard_10.7-1_amd64.tar.gz"
     ssh_public_keys: Optional[str] = ""
     status: Optional[str] = ""
+
 
 def new_container(container: Container):
     # Container ssh keys (optional, but needed if you want to login)
