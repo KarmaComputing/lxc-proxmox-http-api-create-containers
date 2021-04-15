@@ -6,7 +6,7 @@ from time import sleep
 import subprocess
 import tempfile
 from flask import Flask, request
-
+import os
 
 def create_app():
     app = Flask(__name__)
@@ -27,7 +27,7 @@ def create_app():
                    </ul>
                    <h2>Usage:</h2>
                    <p><b>Note:</b>The `ssh_public_keys` is just a copy/paste `cat` of your id_rsa.pub</p>
-                   <pre>curl {request.host_url}container -d '{{"id":"123", "hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {{}}}}'</pre>\n
+                   <pre>curl {request.host_url}container -d '{{"hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {{}}}}'</pre>\n
                    <p>Then ssh into your container: ssh root@&lt;public_ip&gt; using the public key you provided.</p>
                    <br /><a href="/openapi">View Openapi</a>"""
 
@@ -37,21 +37,19 @@ def create_app():
         Create a container with the default template and auto public ipv6 address asignment
         See class Container and class Network for defaults.
         Usage:
-        curl http://127.0.0.1:5000/container -d '{"id":"123", "hostname":123, "memory": 1024, "network": {}}'
+        curl http://127.0.0.1:5000/container -d '{"hostname":123, "memory": 1024, "network": {}}'
 
         Or, with public ssh key injected for root user login
-        curl http://127.0.0.1:5000/container -d '{"id":"123", "hostname":123, "memory": 1024, "network": {}, "ssh_public_keys": "<your id.rsa.pub>"}'
+        curl http://127.0.0.1:5000/container -d '{"hostname":123, "memory": 1024, "network": {}, "ssh_public_keys": "<your id.rsa.pub>"}'
 
         """
         try:
             container = Container(**request.get_json(force=True))
             container.status = "creating"
             new_container(container)
-
-            # Get ip of container
             def get_ip():
                 public_ip = subprocess.getoutput(
-                    f"pct exec {container.id} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
+                    f"pct exec {get_vmid()} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
                 )
                 return public_ip
 
@@ -67,13 +65,10 @@ def create_app():
                     print(f"Got ip address: {public_ip}")
                     attempts = max_attempts
 
-                public_ip = get_ip()  # Always get latest public ip
-
             return (
                 {
                     "msg": f"""Container created! Probably.\n
                   ssh into it with: `ssh root@{public_ip}` using your public key\n
-                  The container id is {container.id}\n
                   You might need to wait a minute or two before the public address is
                   reachable. Not 100% sure why.\n
                   You can expediate it by traceroute6{public_ip} will add your route to
@@ -111,9 +106,8 @@ class Network(BaseModel):
     bridge: Optional[str] = "vmbr0"
     ipv6: Optional[str] = "dhcp"
 
-
 class Container(BaseModel):
-    id: int
+    id: Optional[int] = ""
     hostname: str
     memory: int
     network: Network = None
@@ -121,14 +115,23 @@ class Container(BaseModel):
     ssh_public_keys: Optional[str] = ""
     status: Optional[str] = ""
 
+# Get id of container
+def get_vmid():
+  max = 0
+  for root, dirs, files in os.walk("/etc/pve/lxc/"):
+    for file in files:
+      vmid = int(file.replace('.conf', ''))
+      if vmid > max:
+        max = vmid
+    return max
 
 def new_container(container: Container):
     # Container ssh keys (optional, but needed if you want to login)
     fp = tempfile.NamedTemporaryFile(mode="wt")
     fp.write(container.ssh_public_keys)
     fp.seek(0)
-
-    command = f"pct create {container.id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
+    next_id = get_vmid() + 1
+    command = f"pct create {next_id} --start --hostname {container.hostname} --net0 name={container.network.name},bridge={container.network.bridge},ip6={container.network.ipv6} --memory {container.memory} --ssh-public-keys {fp.name} {container.template}"
     subprocess.run(command, shell=True)
     fp.close()
 
