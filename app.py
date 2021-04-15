@@ -5,32 +5,18 @@ from typing import Optional
 from time import sleep
 import subprocess
 import tempfile
-from flask import Flask, request
+from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 import os
 
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     @app.route("/")
     def index():
-        return f"""<h1>Create lxc container on proxmox via http api</h1>
-                   <p>Specify</p>
-                   <ul>
-                    <li>Ram</li>
-                    <li>Hostname</li>
-                    <li>Public ssh key (so you can login)</li>
-                   </ul>
-                   <p>You get:</p>
-                   <ul>
-                    <li>ipv6 public address for each container</li>
-                    <li>You can ssh into the container</li>
-                   </ul>
-                   <h2>Usage:</h2>
-                   <p><b>Note:</b>The `ssh_public_keys` is just a copy/paste `cat` of your id_rsa.pub</p>
-                   <pre>curl {request.host_url}container -d '{{"hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {{}}}}'</pre>\n
-                   <p>Then ssh into your container: ssh root@&lt;public_ip&gt; using the public key you provided.</p>
-                   <br /><a href="/openapi">View Openapi</a>"""
+        return render_template("index.html")
 
     @app.route("/container", methods=["POST"])
     def create_container():
@@ -68,14 +54,16 @@ def create_app():
                     attempts = max_attempts
 
             return (
-                {
-                    "msg": f"""Container created! Probably.\n
+                jsonify(
+                    {
+                        "msg": f"""Container created! Probably.\n
                   ssh into it with: `ssh root@{public_ip}` using your public key\n
                   You might need to wait a minute or two before the public address is
                   reachable. Not 100% sure why.\n
                   You can expediate it by traceroute6{public_ip} will add your route to
                   routing tables along the way."""
-                },
+                    }
+                ),
                 201,
             )
 

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<title>Hello, world!</title>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="jumbotron">
+          <h1 class="display-4">Create a server quickly</h1>
+          <p class="lead">You get a server with an ipv6 public address, which you can login to using ssh.</p>
+          <hr class="my-4">
+          <p><em>You can also create a server using curl:</em><br />
+            <span style="background:white; padding: 4px;">curl {{ request.host_url }}container -d '{"hostname":123, "memory": 1024, "ssh_public_keys": "<string-of-your-public-key>", "network": {}}'</span></p>
+          <a href="/openapi">View Openapi</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="start">
+      <div class="col-sm-12">
+        <form action="#" method="POST" id="serverForm">
+          <div class="form-group">
+            <label for="hostname">Hostname</label>
+            <input type="hostname" name="hostname" class="form-control" id="hostname" placeholder="example.com" aria-describedby="hostnameHelp" required>
+            <small id="hostnameHelp" class="form-text text-muted">e.g. example.com</small>
+          </div>
+          <div class="form-group">Ram
+            <label for="exampleInput1">Ram</label>
+            <input type="number" name="memory" step="1" class="form-control" value="1024" id="exampleInputRam1" disabled>
+            <small class="form-text text-muted">You can increase this later.</small>
+          </div>
+          <div class="form-group">
+            <label for="ssh_public_keys">Public SSH Key (so you can login)</label>
+            <textarea class="form-control" name="ssh_public_keys" id="ssh_public_keys" rows="3" Required
+            placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC71TlW7HzAUkiLN7GuP6p/IRivXxu0nXvhE4snnKxwpaWod8jPUJCYb8ISt4hhmuGCzHSKz4piOtdYHHUiaLWPZHGTUlkwCqbTYlfiz+YxWsF117I8iOjLGQuqn6f1pgZA+BE7YB2l3sUPNwBoCr5yyycIENFR6euDbCym0kODFhIQA5j2FyMI5QuwXWKj8P4t/pthBgqyyUsah47q51IWz7FVTHup4FIj/JPgqu/X/ZEkH+DHh8qv7kwl5uSBb6evctv7JqqNz2xbGCli+dDLvL0zgsFtPLjycK/KUN5qWHTjNvpE/CPzat2InI4wXYuX11Y9Dfah+jMrR7mb+ahRu0Zbvsn/RIpybgydMahBVYs1SAFtmzbGnnJODlag7vr2D/Jdi3E0LPliPqGQB3zCAINaQ00BAHg4ERxK4eS4TGOmqQVSYG4Y+8YhOBtEcvIGTA5/kfjAL/o69oUsC6x+tWPlzGFB5kQkS2ALs1C+S97F1Iu2yx45ZPfSmdtgGr0= bob@example"></textarea>
+            <small class="form-text text-muted">Don't know what this is? It's better than a password. <a href="https://git-scm.com/book/en/v2/Git-on-the-Server-Generating-Your-SSH-Public-Key" target="_blank">How to generate an ssh key</a></small>
+          </div>
+          <button type="submit" id="save" class="btn btn-primary btn-lg" href="#start" role="button">Start a Server</button>
+        </form>
+      </div>
+    </div>
+  </div><!-- end container -->
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+</script>
+<script>
+form = document.getElementById('save');
+
+form.addEventListener("click", function(e) {
+  e.preventDefault();
+  console.log("OK");
+  form.innerText = "Starting server..."
+  form.disabled = true;
+
+  const formData = new FormData(document.getElementById('serverForm'));
+  var object = {};
+  formData.forEach((value, key) => object[key] = value);
+
+  object['memory'] = 512
+  object['network'] = {}
+
+  var json = JSON.stringify(object);
+  fetch('http://another-web-service.pcpink.co.uk/container', {
+    method: 'POST',
+    body: json
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Success:', data);
+    document.write(data.msg);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+
+})
+</script>
+</body>
+</html>
+
