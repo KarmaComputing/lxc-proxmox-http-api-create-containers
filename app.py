@@ -83,7 +83,7 @@ def create_app():
   <script src="//cdn.jsdelivr.net/npm/redoc@2.0.0-rc.48/bundles/redoc.standalone.min.js"> </script>
   <script src="//cdn.jsdelivr.net/gh/wll8/redoc-try@1.3.4/dist/try.js"></script>
   <script>
-    initTry(`https://raw.githubusercontent.com/chrisjsimpson/lxc-proxmox-http-api-create-containers/main/openapi.yaml`)
+    initTry(`https://raw.githubusercontent.com/karmacomputing/lxc-proxmox-http-api-create-containers/main/openapi.yaml`)
   </script>
 </body>"""
 
