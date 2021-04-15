@@ -8,6 +8,7 @@ import tempfile
 from flask import Flask, request
 import os
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -47,6 +48,7 @@ def create_app():
             container = Container(**request.get_json(force=True))
             container.status = "creating"
             new_container(container)
+
             def get_ip():
                 public_ip = subprocess.getoutput(
                     f"pct exec {get_vmid()} -- ip -6 addr show eth0 | grep -oP '(?<=inet6\s)[\da-f:]+' | head -n 1"
@@ -106,6 +108,7 @@ class Network(BaseModel):
     bridge: Optional[str] = "vmbr0"
     ipv6: Optional[str] = "dhcp"
 
+
 class Container(BaseModel):
     id: Optional[int] = ""
     hostname: str
@@ -115,15 +118,17 @@ class Container(BaseModel):
     ssh_public_keys: Optional[str] = ""
     status: Optional[str] = ""
 
+
 # Get id of container
 def get_vmid():
-  max = 0
-  for root, dirs, files in os.walk("/etc/pve/lxc/"):
-    for file in files:
-      vmid = int(file.replace('.conf', ''))
-      if vmid > max:
-        max = vmid
-    return max
+    max = 0
+    for root, dirs, files in os.walk("/etc/pve/lxc/"):
+        for file in files:
+            vmid = int(file.replace(".conf", ""))
+            if vmid > max:
+                max = vmid
+        return max
+
 
 def new_container(container: Container):
     # Container ssh keys (optional, but needed if you want to login)
@@ -141,5 +146,3 @@ Example:
 pct create 999 --start --hostname 999 --net0 name=eth0,bridge=vmbr0,ip6=dhcp,gw6=2a01:4f8:160:2333:0:1:0:2 --memory 10240 local:vztmpl/debian-10-standard_10.7-1_amd64.tar.gz
 
 """
-
-
