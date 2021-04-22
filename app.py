@@ -44,7 +44,7 @@ def create_app():
             attempts = 0
             max_attempts = 10
             while attempts < max_attempts:
-                if len(get_ip()) < 5 and "fe80" not in get_ip():
+                if len(get_ip()) < 5 and "fe80" in get_ip():
                     sleep(3)
                     print("Waiting for ip address...")
                     max_attempts += 1
@@ -60,7 +60,7 @@ def create_app():
                   ssh into it with: `ssh root@{public_ip}` using your public key\n
                   You might need to wait a minute or two before the public address is
                   reachable. Not 100% sure why.\n
-                  You can expediate it by traceroute6{public_ip} will add your route to
+                  You can expediate it by traceroute6 {public_ip} will add your route to
                   routing tables along the way."""
                     }
                 ),
